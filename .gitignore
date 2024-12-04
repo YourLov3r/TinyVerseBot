@@ -1,0 +1,11 @@
+.idea
+.vscode
+.DS_STORE
+__pycache__
+.venv
+.env
+logs/*
+!logs/.gitkeep
+accounts.json
+sessions/*
+!sessions/.gitkeep

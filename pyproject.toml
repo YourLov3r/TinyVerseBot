@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "tinyversebot"
+version = "0.0.1"
+description = "Bot for automation Tiny Verse telegram mini app"
+authors = ["YourLov3r", "Dellenoam"]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyrogram = "^2.0.106"
+aiohttp = "^3.11.9"
+better-proxy = "^1.2.0"
+pydantic-settings = "^2.6.1"
+colorlog = "^6.9.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
