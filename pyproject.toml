@@ -13,6 +13,8 @@ aiohttp = "^3.11.9"
 better-proxy = "^1.2.0"
 pydantic-settings = "^2.6.1"
 colorlog = "^6.9.0"
+aiohttp-socks = "^0.9.1"
+tgcrypto = "^1.2.5"
 
 
 [build-system]

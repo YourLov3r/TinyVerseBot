@@ -4,7 +4,7 @@ from typing import Dict, List
 from bot.config.config import settings
 from bot.core.registrator import register_sessions
 from bot.utils.json_manager import JsonManager
-from bot.utils.logger import logger
+from bot.utils.logger import user_logger
 from bot.utils.ua_generator import TelegramUserAgentGenerator
 
 
@@ -21,7 +21,7 @@ class AccountsManager:
         if not available_accounts:
             raise ValueError("No available accounts found, please register first")
         else:
-            logger.info(f"Found {len(available_accounts)} available accounts")
+            user_logger.info(f"Found {len(available_accounts)} available accounts")
 
         return available_accounts
 
@@ -54,7 +54,9 @@ class AccountsManager:
             if account:
                 available_accounts.append(account)
             else:
-                logger.warning(f"Session {session_name} not found in accounts.json")
+                user_logger.warning(
+                    f"Session {session_name} not found in accounts.json"
+                )
                 user_response = input(
                     f"Do you want to add session {session_name} to accounts.json? [Y/n]: "
                 )

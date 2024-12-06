@@ -1,13 +1,21 @@
 import argparse
+import asyncio
+from random import randint
+import traceback
+from typing import Dict, List
+
+from better_proxy import Proxy
 
 from bot.config.config import settings
-from bot.core.registrator import register_sessions
+from bot.core.registrator import get_telegram_client, register_sessions
+from bot.core.tinyversebot import run_bot
+from bot.utils.accounts_manager import AccountsManager
 from bot.utils.banner_animation import print_banner_animation
-from bot.utils.logger import logger
+from bot.utils.logger import user_logger, dev_logger
 
 options = """
 1. Register session
-
+2. Start Bot
 """
 
 
@@ -27,10 +35,10 @@ async def process() -> None:
             action = input("> ")
 
             if not action.isdigit():
-                logger.warning("Action must be number")
+                user_logger.warning("Action must be number")
                 print(options)
-            elif action not in ["1"]:
-                logger.warning("Action must be 1")
+            elif action not in ["1", "2"]:
+                user_logger.warning("Action must be 1 or 2")
                 print(options)
             else:
                 action = int(action)
@@ -46,3 +54,48 @@ async def process() -> None:
                 continue
 
             break
+    elif action == 2:
+        accounts = await AccountsManager().get_accounts()
+        await run_tasks(accounts=accounts)
+
+
+async def run_tasks(accounts: List[Dict[str, str]]) -> None:
+    tasks = []
+    try:
+        for account in accounts:
+            session_name = account.get("session_name")
+            user_agent = account.get("user_agent")
+            raw_proxy = account.get("proxy")
+
+            if not session_name or not user_agent:
+                raise ValueError(
+                    "Session name or user agent not found in accounts.json"
+                )
+
+            telegram_client = await get_telegram_client(
+                session_name=session_name, user_agent=user_agent, raw_proxy=raw_proxy
+            )
+
+            proxy = Proxy.from_str(proxy=raw_proxy).as_url if raw_proxy else None
+
+            start_delay = randint(
+                settings.INITIAL_START_DELAY_SECONDS[0],
+                settings.INITIAL_START_DELAY_SECONDS[1],
+            )
+
+            task = asyncio.create_task(
+                run_bot(
+                    telegram_client=telegram_client,
+                    user_agent=user_agent,
+                    proxy=proxy,
+                    start_delay=start_delay,
+                )
+            )
+            task.set_name(session_name)
+
+            tasks.append(task)
+
+        await asyncio.gather(*tasks, return_exceptions=True)
+    except Exception as error:
+        user_logger.error(f"{error or 'Something went wrong'}")
+        dev_logger.error(f"{traceback.format_exc()}")

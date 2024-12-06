@@ -12,7 +12,7 @@ class Device:
 
 
 class TelegramUserAgentGenerator:
-    TELEGRAM_VERSION = "11.4.3"
+    TELEGRAM_VERSION = "11.5.2"
     CHROME_VERSIONS = [
         "131.0.6778.86" "130.0.6778.70" "130.0.6723.117" "130.0.6723.73",
         "130.0.6723.70",

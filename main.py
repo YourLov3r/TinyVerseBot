@@ -1,7 +1,7 @@
 import asyncio
 import sys
 
-from bot.utils.logger import logger
+from bot.utils.logger import user_logger
 from bot.utils.launcher import process
 
 
@@ -13,5 +13,5 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logger.warning("Bot stopped")
+        user_logger.warning("Bot stopped")
         sys.exit()

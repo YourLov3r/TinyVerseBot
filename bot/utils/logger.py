@@ -7,8 +7,8 @@ import colorlog
 
 logging.Formatter.converter = time.localtime
 
-logger = logging.getLogger("user_logger")
-logger.setLevel(logging.INFO)
+user_logger = logging.getLogger("user_logger")
+user_logger.setLevel(logging.INFO)
 
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setLevel(logging.INFO)
@@ -43,8 +43,8 @@ user_file_formatter = logging.Formatter(
 console_handler.setFormatter(user_console_formatter)
 file_handler_user.setFormatter(user_file_formatter)
 
-logger.addHandler(console_handler)
-logger.addHandler(file_handler_user)
+user_logger.addHandler(console_handler)
+user_logger.addHandler(file_handler_user)
 
 dev_logger = logging.getLogger("dev_logger")
 dev_logger.setLevel(logging.DEBUG)

@@ -5,7 +5,7 @@ from pyrogram.client import Client
 
 from bot.config.config import settings
 from bot.utils.json_manager import JsonManager
-from bot.utils.logger import dev_logger, logger
+from bot.utils.logger import dev_logger, user_logger
 from bot.utils.ua_generator import TelegramUserAgentGenerator
 
 
@@ -26,7 +26,7 @@ async def register_sessions(session_name: str | None = None) -> None:
         raw_proxy = input(
             "Enter proxy in format type://username:password@ip:port (Enter to skip): "
         )
-        
+
         user_agent_generator = TelegramUserAgentGenerator()
         user_agent = user_agent_generator.generate()
 
@@ -43,11 +43,11 @@ async def register_sessions(session_name: str | None = None) -> None:
             session_name=session_name, user_agent=user_agent, proxy=raw_proxy
         )
 
-        logger.info(
+        user_logger.info(
             f"Session {session_name} registered | User: {user_data.username} | User ID: {user_data.id}"
         )
     except Exception as error:
-        logger.error(f"{error or 'Something went wrong'}")
+        user_logger.error(f"{error or 'Something went wrong'}")
         dev_logger.error(f"Error while registering session: {traceback.format_exc()}")
 
 
