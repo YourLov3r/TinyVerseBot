@@ -52,9 +52,10 @@ class SafetyManager(SafetyManagerInterface):
                 f"Safety Manager | Can't find current TinyVerse version: {current_tverse_version}"
             )
             return False
-        if not current_tverse_version == self._known_tverse_version:
+        
+        if current_tverse_version != self._known_tverse_version:
             user_logger.critical(
-                f"Safety Manager | Found different TinyVerse Version! | Current: {self._known_tverse_version} New: {current_tverse_version}"
+                f"Safety Manager | Found different TinyVerse Version! | Current: {self._known_tverse_version} | New: {current_tverse_version}"
             )
             return False
 

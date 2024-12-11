@@ -36,6 +36,8 @@ class TinyVerseBot:
         self._headers = self._create_headers()
         self.safety_manager = safety_manager
         self.json_manager = JsonManager()
+        if settings.USE_REF:
+            self.ref_id = settings.REF_ID.split("-")[1]
 
     def _create_headers(self) -> Dict[str, Dict[str, str]]:
         base_headers = {
@@ -150,12 +152,15 @@ class TinyVerseBot:
         if settings.SLEEP_AT_NIGHT:
             await self._handle_night_sleep()
 
-        tg_mini_app_auth = TelegramMiniAppAuth(self.telegram_client, proxy=self.proxy)
-        tg_auth_app_data = await tg_mini_app_auth.get_telegram_web_data(
-            "tverse", "tverse", settings.REF_ID if settings.USE_REF else None
-        )
+        if settings.CHECK_BOT_STATE:
+            bot_state = await session.get(
+                "https://raw.githubusercontent.com/YourLov3r/TinyVerseBot/refs/heads/master/bot_state"
+            )
+            bot_state.raise_for_status()
 
-        self._init_data = tg_auth_app_data["init_data"]
+            if await bot_state.text() != "running":
+                user_logger.critical("Admins have stopped the bot!")
+                sys.exit(1)
 
         if not await self.safety_manager.check_safety(session):
             user_logger.critical(f"{self.session_name} | Safety check failed")
@@ -164,6 +169,11 @@ class TinyVerseBot:
         self.current_tverse_version = self.safety_manager.get_current_tverse_version
         if not self.current_tverse_version:
             raise ValueError(f"{self.session_name} | Cannot get current tverse version")
+
+        tg_mini_app_auth = TelegramMiniAppAuth(self.telegram_client, proxy=self.proxy)
+        tg_auth_app_data = await tg_mini_app_auth.get_telegram_web_data(
+            "tverse", "tverse", settings.REF_ID if settings.USE_REF else None
+        )
 
         self._headers["tinyverse"]["X-Application-Version"] = (
             self.current_tverse_version
@@ -175,7 +185,7 @@ class TinyVerseBot:
 
         self._tverse_session = await self._get_tverse_session()
         if not self._tverse_session:
-            await self._login(session)
+            await self._login(session, tg_auth_app_data["init_data"])
         else:
             await self._get_info(session)
             user_logger.info(
@@ -184,22 +194,29 @@ class TinyVerseBot:
 
         await self._get_galaxy(session)
 
-        begin_journey = False
-        if (self._user_info.get("stars") == 0) and (self._user_info.get("galaxy") == 0):
+        is_journey_started = self._user_info.get("galaxy") > 0
+        if not is_journey_started:
+            await asyncio.sleep(random.uniform(2, 4))
             await self._begin_journey(session)
             await self._get_info(session)
-            await self._get_galaxy(session, is_go_home=True)
-            begin_journey = True
+            await self._get_galaxy(session, go_to_home_galaxy=True)
 
-        if not begin_journey:
-            await self._get_galaxy(session, is_go_home=True)
+        if is_journey_started:
+            await self._get_galaxy(session, go_to_home_galaxy=True)
 
-        if self._user_info.get("dust_progress") == 1:
-            await self._collect_dust(session)
-            await self._get_info(session)
+        if settings.CLAIM_DUST:
+            if self._user_info.get("dust_progress") == 1:
+                await asyncio.sleep(random.uniform(1, 2))
+                await self._collect_dust(session)
+                await self._get_info(session)
+            else:
+                dust_progress = round(self._user_info.get("dust_progress") * 100, 2)
+                user_logger.info(
+                    f"{self.session_name} | No dust to collect | Current progress: {dust_progress}%"
+                )
 
-    async def _login(self, session: aiohttp.ClientSession):
-        form_data = {"bot_id": 7631205793, "data": self._init_data}
+    async def _login(self, session: aiohttp.ClientSession, init_data: str):
+        form_data = {"bot_id": 7631205793, "data": init_data}
         response = await session.post(
             app_settings.urls.BASE_API_DOMAIN + app_settings.urls.AUTH_ENDPOINT,
             data=form_data,
@@ -285,15 +302,15 @@ class TinyVerseBot:
     async def _get_galaxy(
         self,
         session: aiohttp.ClientSession,
-        is_go_home: bool = False,
+        go_to_home_galaxy: bool = False,
     ) -> None:
         try:
             form_payload = {
                 "session": self._tverse_session,
                 "member_id": "null",
             }
-            if settings.USE_REF and not is_go_home:
-                form_payload["id"] = settings.REF_ID.split("-")[1]
+            if settings.USE_REF and not go_to_home_galaxy:
+                form_payload["id"] = self.ref_id
 
             response = await session.post(
                 app_settings.urls.BASE_API_DOMAIN
@@ -325,7 +342,7 @@ class TinyVerseBot:
             )
             response.raise_for_status()
 
-            user_logger.info(f"{self.session_name} | Successfully began journey")
+            user_logger.info(f"{self.session_name} | Journey has begun")
         except Exception:
             raise Exception(f"{self.session_name} | Failed to begin journey")
 

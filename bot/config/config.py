@@ -20,5 +20,8 @@ class Settings(BaseSettings):
     USE_REF: bool = True
     REF_ID: str = "galaxy-0005d76d760001b8ba230005eb9f2e"
 
+    CHECK_BOT_STATE: bool = True
+    CLAIM_DUST: bool = True
+
 
 settings = Settings()  # type: ignore
