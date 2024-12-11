@@ -12,7 +12,7 @@ from pyrogram.client import Client
 
 from bot.config.app_config import app_settings
 from bot.config.config import settings
-from bot.core.services.safety_manager import SafetyManager, SafetyManagerInterface
+from bot.core.safety_manager import SafetyManager, SafetyManagerInterface
 from bot.core.tg_mini_app_auth import TelegramMiniAppAuth
 from bot.utils.json_manager import JsonManager
 from bot.utils.logger import dev_logger, user_logger
