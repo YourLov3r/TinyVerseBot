@@ -5,6 +5,7 @@ from typing import Dict
 import aiohttp
 
 from bot.config.app_config import app_settings
+from bot.utils.logger import user_logger
 
 
 class SafetyManagerInterface(ABC):
@@ -21,7 +22,7 @@ class SafetyManagerInterface(ABC):
 class SafetyManager(SafetyManagerInterface):
     def __init__(self):
         self._headers = self._create_headers()
-        self._known_tverse_version = "0.6.30"
+        self._known_tverse_version = app_settings.KNOWN_VERSION
 
     def _create_headers(self) -> Dict[str, Dict[str, str]]:
         base_headers = {
@@ -47,8 +48,14 @@ class SafetyManager(SafetyManagerInterface):
     async def check_safety(self, session: aiohttp.ClientSession) -> bool:
         current_tverse_version = await self._get_current_version(session)
         if not current_tverse_version:
+            user_logger.critical(
+                f"Safety Manager | Can't find current TinyVerse version: {current_tverse_version}"
+            )
             return False
         if not current_tverse_version == self._known_tverse_version:
+            user_logger.critical(
+                f"Safety Manager | Found different TinyVerse Version! | Current: {self._known_tverse_version} New: {current_tverse_version}"
+            )
             return False
 
         self._current_tverse_version = current_tverse_version

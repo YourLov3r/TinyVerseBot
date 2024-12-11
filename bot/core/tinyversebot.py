@@ -1,9 +1,10 @@
 import asyncio
 import random
 import re
+import sys
 import traceback
 from datetime import datetime
-from typing import Dict, NoReturn
+from typing import Dict, List, NoReturn
 
 import aiohttp
 from aiohttp_socks import ProxyConnector
@@ -13,6 +14,7 @@ from bot.config.app_config import app_settings
 from bot.config.config import settings
 from bot.core.services.safety_manager import SafetyManager, SafetyManagerInterface
 from bot.core.tg_mini_app_auth import TelegramMiniAppAuth
+from bot.utils.json_manager import JsonManager
 from bot.utils.logger import dev_logger, user_logger
 
 
@@ -33,6 +35,7 @@ class TinyVerseBot:
         self.proxy: str | None = proxy
         self._headers = self._create_headers()
         self.safety_manager = safety_manager
+        self.json_manager = JsonManager()
 
     def _create_headers(self) -> Dict[str, Dict[str, str]]:
         base_headers = {
@@ -45,17 +48,23 @@ class TinyVerseBot:
             "X-Requested-With": "XMLHttpRequest",
         }
 
-        def create_headers(additional_headers=None) -> Dict[str, str]:
+        def create_headers(
+            additional_headers: Dict[str, str] | None = None,
+            delete_headers: List[str] | None = None,
+        ) -> Dict[str, str]:
             headers = base_headers.copy()
             if additional_headers:
                 headers.update(additional_headers)
+            if delete_headers:
+                for header in delete_headers:
+                    headers.pop(header, None)
             return headers
 
         return {
             "tinyverse": create_headers(
                 {
                     "Origin": app_settings.urls.BASE_APP_DOMAIN,
-                    "X-Application-Version": "0.6.30",
+                    "X-Application-Version": "",
                 }
             ),
         }
@@ -70,11 +79,11 @@ class TinyVerseBot:
         sec_ch_ua_mobile = "?1"
         sec_ch_ua_platform = '"Android"'
 
-        for header in self._headers.values():
-            header["User-Agent"] = self.user_agent
-            header["Sec-Ch-Ua"] = sec_ch_ua
-            header["Sec-Ch-Ua-Mobile"] = sec_ch_ua_mobile
-            header["Sec-Ch-Ua-Platform"] = sec_ch_ua_platform
+        for headers_name, headers in self._headers.items():
+            headers["User-Agent"] = self.user_agent
+            headers["Sec-Ch-Ua"] = sec_ch_ua
+            headers["Sec-Ch-Ua-Mobile"] = sec_ch_ua_mobile
+            headers["Sec-Ch-Ua-Platform"] = sec_ch_ua_platform
 
         self.proxy = self.proxy
 
@@ -149,9 +158,45 @@ class TinyVerseBot:
         self._init_data = tg_auth_app_data["init_data"]
 
         if not await self.safety_manager.check_safety(session):
-            raise Exception(f"{self.session_name} | Safety check failed")
+            user_logger.critical(f"{self.session_name} | Safety check failed")
+            sys.exit(1)
 
-        await self._login(session)
+        self.current_tverse_version = self.safety_manager.get_current_tverse_version
+        if not self.current_tverse_version:
+            raise ValueError(f"{self.session_name} | Cannot get current tverse version")
+
+        self._headers["tinyverse"]["X-Application-Version"] = (
+            self.current_tverse_version
+        )
+
+        await self._get_config(session)
+        await self._get_lang(session)
+        await self._get_boost(session)
+
+        self._tverse_session = await self._get_tverse_session()
+        if not self._tverse_session:
+            await self._login(session)
+        else:
+            await self._get_info(session)
+            user_logger.info(
+                f"{self.session_name} | Successfully logged in | Dust amount: {self._user_info.get("dust")}"
+            )
+
+        await self._get_galaxy(session)
+
+        begin_journey = False
+        if (self._user_info.get("stars") == 0) and (self._user_info.get("galaxy") == 0):
+            await self._begin_journey(session)
+            await self._get_info(session)
+            await self._get_galaxy(session, is_go_home=True)
+            begin_journey = True
+
+        if not begin_journey:
+            await self._get_galaxy(session, is_go_home=True)
+
+        if self._user_info.get("dust_progress") == 1:
+            await self._collect_dust(session)
+            await self._get_info(session)
 
     async def _login(self, session: aiohttp.ClientSession):
         form_data = {"bot_id": 7631205793, "data": self._init_data}
@@ -164,14 +209,143 @@ class TinyVerseBot:
 
         response_json = await response.json()
         self._user_info = response_json.get("response", {})
-        self._user_session = response_json.get("response", {}).get("session")
+        self._tverse_session = response_json.get("response", {}).get("session")
 
-        if not self._user_session:
+        if not self._tverse_session:
             raise Exception(f"{self.session_name} | Failed to get user session")
+
+        self.json_manager.update_account(
+            session_name=self.session_name,
+            tverse_session=self._tverse_session,
+        )
 
         user_logger.info(
             f"{self.session_name} | Successfully logged in | Dust amount: {self._user_info.get("dust")}"
         )
+
+    async def _get_tverse_session(self) -> str | None:
+        account_data = self.json_manager.get_account_by_session_name(self.session_name)
+        if account_data is not None:
+            return account_data.get("tverse_session")
+        raise Exception(
+            f"{self.session_name} | Can't find session: {self.session_name} in accounts.json"
+        )
+
+    async def _get_config(self, session: aiohttp.ClientSession) -> None:
+        try:
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN + app_settings.urls.CONFIG_ENDPOINT,
+                data={"env": "app"},
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+
+        except Exception:
+            raise Exception(f"{self.session_name} | Failed to get config")
+
+    async def _get_lang(self, session: aiohttp.ClientSession) -> None:
+        try:
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN + app_settings.urls.LANG_ENDPOINT,
+                data={},
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+
+        except Exception:
+            raise Exception(f"{self.session_name} | Failed to get lang")
+
+    async def _get_boost(self, session: aiohttp.ClientSession) -> None:
+        try:
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN + app_settings.urls.BOOST_ENDPOINT,
+                data={},
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+
+        except Exception:
+            raise Exception(f"{self.session_name} | Failed to get boosts")
+
+    async def _get_info(self, session: aiohttp.ClientSession) -> None:
+        try:
+            form_data = {"session": self._tverse_session, "id": "undefined"}
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN + app_settings.urls.INFO_ENDPOINT,
+                data=form_data,
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+            response_json = await response.json()
+            self._user_info = response_json.get("response", {})
+
+        except Exception:
+            raise Exception(f"{self.session_name} | Failed to get info")
+
+    async def _get_galaxy(
+        self,
+        session: aiohttp.ClientSession,
+        is_go_home: bool = False,
+    ) -> None:
+        try:
+            form_payload = {
+                "session": self._tverse_session,
+                "member_id": "null",
+            }
+            if settings.USE_REF and not is_go_home:
+                form_payload["id"] = settings.REF_ID.split("-")[1]
+
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN
+                + app_settings.urls.GET_GALAXY_PREVIEW_ENDPOINT,
+                data=form_payload,
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+
+        except Exception:
+            raise Exception(
+                f"{self.session_name} | Failed to get galaxy"
+            )  # failed to get get
+
+    async def _begin_journey(self, session: aiohttp.ClientSession) -> None:
+        try:
+            form_payload = {
+                "session": self._tverse_session,
+                "stars": 100,
+                "referral": "",
+            }
+            if settings.USE_REF:
+                form_payload["referral"] = settings.REF_ID.split("-")[1]
+
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN + app_settings.urls.BEGIN_ENDPOINT,
+                data=form_payload,
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+
+            user_logger.info(f"{self.session_name} | Successfully began journey")
+        except Exception:
+            raise Exception(f"{self.session_name} | Failed to begin journey")
+
+    async def _collect_dust(self, session: aiohttp.ClientSession) -> None:
+        try:
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN
+                + app_settings.urls.COLLECT_DUST_ENDPOINT,
+                data={"session": self._tverse_session},
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+            response_json = await response.json()
+
+            user_logger.info(
+                f"{self.session_name} | Successfully collected {response_json.get("response").get("dust")} dust"
+            )
+
+        except Exception:
+            raise Exception(f"{self.session_name} | Failed to collect dust")
 
     async def _handle_night_sleep(self) -> None:
         current_hour = datetime.now().hour

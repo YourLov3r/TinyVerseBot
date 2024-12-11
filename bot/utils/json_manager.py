@@ -10,21 +10,21 @@ class JsonManager:
 
     def __init__(self, filename="accounts.json") -> None:
         self.filename = filename
-        self.load_accounts()
+        self._load_accounts()
 
     def __new__(cls, *args, **kwargs) -> Self:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def load_accounts(self) -> None:
+    def _load_accounts(self) -> None:
         if os.path.exists(self.filename):
             with open(self.filename, "r") as file:
                 self.accounts = json.load(file)
         else:
             self.accounts = []
 
-    def save_accounts(self) -> None:
+    def _save_accounts(self) -> None:
         with open(self.filename, "w") as file:
             json.dump(self.accounts, file, indent=4)
 
@@ -49,7 +49,7 @@ class JsonManager:
             "proxy": proxy,
         }
         self.accounts.append(new_account)
-        self.save_accounts()
+        self._save_accounts()
 
     def update_account(self, session_name, user_agent=None, proxy=None, **kwargs) -> None:
         account = self.get_account_by_session_name(session_name)
@@ -67,4 +67,4 @@ class JsonManager:
         for key, value in kwargs.items():
             account[key] = value
 
-        self.save_accounts()
+        self._save_accounts()
