@@ -160,7 +160,7 @@
 
 ```shell
 git clone https://github.com/YourLov3r/TinyVerseBot.git
-cd NotPixelBot
+cd TinyVerseBot
 python3 -m venv .venv
 source .venv/bin/activate
 pip install poetry
@@ -175,7 +175,7 @@ nano .env
 
 ```shell
 git clone https://github.com/YourLov3r/TinyVerseBot.git
-cd NotPixelBot
+cd YinyVerseBot
 python -m venv .venv
 .venv\Scripts\activate
 pip install poetry
