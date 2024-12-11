@@ -186,7 +186,7 @@ copy .env-example .env
 
 ### Run the script
 
-![NotPixel Intro](https://github.com/Dellenoam/NotPixelBot/blob/master/assets/NotPixel_Intro.gif)
+![TinyVerse Intro](https://github.com/YourLov3r/TinyVerseBot/blob/master/assets/TinyVerse_Intro.gif)
 
 #### Using start.bat
 
