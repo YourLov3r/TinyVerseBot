@@ -376,35 +376,32 @@ class TinyVerseBot:
             settings.NIGHT_END_HOURS[0], settings.NIGHT_END_HOURS[1]
         )
 
-        is_night_time = (
-            (start_night_time <= current_hour <= 23)
-            or (0 <= current_hour <= end_night_time)
-            if start_night_time > end_night_time
-            else (start_night_time <= current_hour <= end_night_time)
-        )
-
-        if is_night_time:
-            random_minutes_to_sleep_time = random.randint(
-                settings.ADDITIONAL_NIGHT_SLEEP_MINUTES[0],
-                settings.ADDITIONAL_NIGHT_SLEEP_MINUTES[1],
-            )
-
-            sleep_time_in_hours = None
-
-            if start_night_time <= current_hour <= 23:
-                sleep_time_in_hours = 24 - current_hour + end_night_time
-            elif 0 <= current_hour <= end_night_time:
+        if start_night_time > end_night_time:
+            if current_hour >= start_night_time or current_hour < end_night_time:
+                if current_hour >= start_night_time:
+                    sleep_time_in_hours = 24 - current_hour + end_night_time
+                else:
+                    sleep_time_in_hours = end_night_time - current_hour
+            else:
+                return
+        else:
+            if start_night_time <= current_hour <= end_night_time:
                 sleep_time_in_hours = end_night_time - current_hour
             else:
                 return
 
-            user_logger.info(
-                f"{self.session_name} | It's night time. Sleeping for: {int(sleep_time_in_hours)} hours and {random_minutes_to_sleep_time} minutes"
-            )
+        random_minutes_to_sleep_time = random.randint(
+            settings.ADDITIONAL_NIGHT_SLEEP_MINUTES[0],
+            settings.ADDITIONAL_NIGHT_SLEEP_MINUTES[1],
+        )
 
-            await asyncio.sleep(
-                (sleep_time_in_hours * 60 * 60) + (random_minutes_to_sleep_time * 60)
-            )
+        user_logger.info(
+            f"{self.session_name} | It's night time. Sleeping for: {int(sleep_time_in_hours)} hours and {random_minutes_to_sleep_time} minutes"
+        )
+
+        await asyncio.sleep(
+            (sleep_time_in_hours * 60 * 60) + (random_minutes_to_sleep_time * 60)
+        )
 
 
 def handle_error(session_name, error: Exception) -> None:
