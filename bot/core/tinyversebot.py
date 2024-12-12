@@ -188,8 +188,9 @@ class TinyVerseBot:
             await self._login(session, tg_auth_app_data["init_data"])
         else:
             await self._get_info(session)
+            dust_amount = self._user_info.get("dust")
             user_logger.info(
-                f"{self.session_name} | Successfully logged in | Dust amount: {self._user_info.get("dust")}"
+                f"{self.session_name} | Successfully logged in | Dust amount: {dust_amount}"
             )
 
         await self._get_galaxy(session)
@@ -236,8 +237,9 @@ class TinyVerseBot:
             tverse_session=self._tverse_session,
         )
 
+        dust_amount = self._user_info.get("dust")
         user_logger.info(
-            f"{self.session_name} | Successfully logged in | Dust amount: {self._user_info.get("dust")}"
+            f"{self.session_name} | Successfully logged in | Dust amount: {dust_amount}"
         )
 
     async def _get_tverse_session(self) -> str | None:
@@ -357,8 +359,9 @@ class TinyVerseBot:
             response.raise_for_status()
             response_json = await response.json()
 
+            collected_dust = response_json.get("response").get("dust")
             user_logger.info(
-                f"{self.session_name} | Successfully collected {response_json.get("response").get("dust")} dust"
+                f"{self.session_name} | Successfully collected {collected_dust} dust"
             )
 
         except Exception:
