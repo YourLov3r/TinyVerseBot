@@ -226,13 +226,14 @@ class TinyVerseBot:
                 )
 
         if settings.ADD_STARS:
-            max_stars = max_stars_to_add(
-                self._user_info.get("dust"), self._user_info.get("stars")
-            )
-            if max_stars is not False:
-                await self._add_stars_to_galaxy(session=session, max_stars=max_stars)
-                await self._get_galaxy(session, galaxy_id=self.user_galaxy_id)
-                await self._get_info(session)
+            if self._user_info.get("dust") and self._user_info.get("stars"):
+                max_stars = max_stars_to_add(
+                    self._user_info.get("dust"), self._user_info.get("stars")
+                )
+                if max_stars is not False:
+                    await self._add_stars_to_galaxy(session=session, max_stars=max_stars)
+                    await self._get_galaxy(session, galaxy_id=self.user_galaxy_id)
+                    await self._get_info(session)
 
         # await self._open_boosts(session)
 
