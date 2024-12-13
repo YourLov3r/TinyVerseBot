@@ -14,6 +14,7 @@ from bot.config.app_config import app_settings
 from bot.config.config import settings
 from bot.core.safety_manager import SafetyManager, SafetyManagerInterface
 from bot.core.tg_mini_app_auth import TelegramMiniAppAuth
+from bot.core.utils import max_stars_to_add
 from bot.utils.json_manager import JsonManager
 from bot.utils.logger import dev_logger, user_logger
 
@@ -193,17 +194,20 @@ class TinyVerseBot:
                 f"{self.session_name} | Successfully logged in | Dust amount: {dust_amount}"
             )
 
-        await self._get_galaxy(session)
+        if settings.USE_REF:
+            await self._get_galaxy(session, galaxy_id=self.ref_id)
+        else:
+            await self._get_galaxy(session)
 
         is_journey_started = self._user_info.get("galaxy") > 0
         if not is_journey_started:
             await asyncio.sleep(random.uniform(2, 4))
             await self._begin_journey(session)
             await self._get_info(session)
-            await self._get_galaxy(session, go_to_home_galaxy=True)
+            await self._get_galaxy(session)
 
-        if is_journey_started:
-            await self._get_galaxy(session, go_to_home_galaxy=True)
+        if is_journey_started and settings.USE_REF:
+            await self._get_galaxy(session)
 
         if settings.CLAIM_DUST:
             if self._user_info.get("dust_progress") == 1:
@@ -215,6 +219,17 @@ class TinyVerseBot:
                 user_logger.info(
                     f"{self.session_name} | No dust to collect | Current progress: {dust_progress}%"
                 )
+
+        if settings.ADD_STARS:
+            max_stars = max_stars_to_add(
+                self._user_info.get("dust"), self._user_info.get("stars")
+            )
+            if max_stars is not False:
+                await self._add_stars_to_galaxy(session=session, max_stars=max_stars)
+                await self._get_galaxy(session, galaxy_id=self.user_galaxy_id)
+                await self._get_info(session)
+
+        # await self._open_boosts(session)
 
     async def _login(self, session: aiohttp.ClientSession, init_data: str):
         form_data = {"bot_id": 7631205793, "data": init_data}
@@ -302,17 +317,15 @@ class TinyVerseBot:
             raise Exception(f"{self.session_name} | Failed to get info")
 
     async def _get_galaxy(
-        self,
-        session: aiohttp.ClientSession,
-        go_to_home_galaxy: bool = False,
+        self, session: aiohttp.ClientSession, galaxy_id: str | None = None
     ) -> None:
         try:
             form_payload = {
                 "session": self._tverse_session,
                 "member_id": "null",
             }
-            if settings.USE_REF and not go_to_home_galaxy:
-                form_payload["id"] = self.ref_id
+            if galaxy_id is not None:
+                form_payload["id"] = galaxy_id
 
             response = await session.post(
                 app_settings.urls.BASE_API_DOMAIN
@@ -321,6 +334,10 @@ class TinyVerseBot:
                 headers=self._headers["tinyverse"],
             )
             response.raise_for_status()
+
+            if galaxy_id is None:
+                response_json = await response.json()
+                self.user_galaxy_id = response_json.get("response", {}).get("id")
 
         except Exception:
             raise Exception(
@@ -366,6 +383,46 @@ class TinyVerseBot:
 
         except Exception:
             raise Exception(f"{self.session_name} | Failed to collect dust")
+
+    async def _add_stars_to_galaxy(
+        self, session: aiohttp.ClientSession, max_stars
+    ) -> None:
+        try:
+            form_data = {
+                "session": self._tverse_session,
+                "galaxy_id": self.user_galaxy_id,
+                "stars": max_stars,
+            }
+
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN
+                + app_settings.urls.CREATE_STARS_ENDPOINT,
+                data=form_data,
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+
+            user_logger.info(
+                f"{self.session_name} | Succsessfully added {max_stars} stars!"
+            )
+
+        except Exception:
+            raise Exception(f"{self.session_name} | Failed to add stars")
+
+    async def _open_boosts(self, session: aiohttp.ClientSession) -> None:
+        try:
+            response = await session.post(
+                app_settings.urls.BASE_API_DOMAIN
+                + app_settings.urls.USER_BOOSTS_ENDPOINT,
+                data={"session": self._tverse_session},
+                headers=self._headers["tinyverse"],
+            )
+            response.raise_for_status()
+            response_json = await response.json()
+            print(response_json)
+
+        except Exception:
+            raise Exception(f"{self.session_name} | Failed to open boosts")
 
     async def _handle_night_sleep(self) -> None:
         current_hour = datetime.now().hour

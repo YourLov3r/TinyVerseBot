@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     CHECK_BOT_STATE: bool = True
     CLAIM_DUST: bool = True
+    ADD_STARS: bool = True
 
 
 settings = Settings()  # type: ignore
