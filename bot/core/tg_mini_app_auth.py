@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Dict
+from typing import Any, Dict
 from urllib.parse import (
     parse_qs,
     unquote,
@@ -11,8 +11,10 @@ from better_proxy import Proxy
 from pyrogram.errors import (
     AuthKeyUnregistered,
     FloodWait,
+    SessionRevoked,
     Unauthorized,
     UserDeactivated,
+    UserDeactivatedBan,
 )
 from pyrogram.raw.functions.contacts.resolve_username import ResolveUsername
 from pyrogram.raw.functions.messages.request_web_view import RequestWebView
@@ -32,7 +34,7 @@ class TelegramMiniAppAuth:
 
     async def get_telegram_web_data(
         self, peer_id: str, short_name: str, start_param: str | None, attempt: int = 1
-    ):
+    ) -> Dict[str, Any]:
         try:
             if self.proxy:
                 proxy = Proxy.from_str(self.proxy)
@@ -101,6 +103,14 @@ class TelegramMiniAppAuth:
             raise Exception(
                 f"{self.session_name} | Error while getting telegram web data"
             )
+        except (
+            Unauthorized,
+            UserDeactivated,
+            AuthKeyUnregistered,
+            SessionRevoked,
+            UserDeactivatedBan,
+        ):
+            raise Exception(f"{self.session_name} | Invalid session")
         except Exception:
             if attempt <= 3:
                 user_logger.warning(
