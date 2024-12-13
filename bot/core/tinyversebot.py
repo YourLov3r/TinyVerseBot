@@ -199,7 +199,9 @@ class TinyVerseBot:
         else:
             await self._get_galaxy(session)
 
-        is_journey_started = self._user_info.get("galaxy") > 0
+        is_journey_started = (
+            self._user_info.get("galaxy") and self._user_info.get("galaxy") > 0
+        )
         if not is_journey_started:
             await asyncio.sleep(random.uniform(2, 4))
             await self._begin_journey(session)
