@@ -215,7 +215,10 @@ class TinyVerseBot:
                 await self._collect_dust(session)
                 await self._get_info(session)
             else:
-                dust_progress = round(self._user_info.get("dust_progress") * 100, 2)
+                if self._user_info.get("dust_progress"):
+                    dust_progress = round(self._user_info.get("dust_progress") * 100, 2)
+                else:
+                    dust_progress = 0
                 user_logger.info(
                     f"{self.session_name} | No dust to collect | Current progress: {dust_progress}%"
                 )
