@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "tinyversebot"
-version = "0.9.0"
+version = "0.10.0"
 description = "Bot for automation Tiny Verse telegram mini app"
 authors = ["YourLov3r", "Dellenoam"]
 license = "MIT License"
