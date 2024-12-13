@@ -17,6 +17,6 @@ class UrlConfig(BaseModel):
 
 class AppSettings(BaseModel):
     urls: UrlConfig = UrlConfig()
-    KNOWN_VERSION: str = "0.7.17"
+    KNOWN_VERSION: str = "0.7.18"
 
 app_settings = AppSettings()

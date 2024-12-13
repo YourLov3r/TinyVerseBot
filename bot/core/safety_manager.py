@@ -49,13 +49,13 @@ class SafetyManager(SafetyManagerInterface):
         current_tverse_version = await self._get_current_version(session)
         if not current_tverse_version:
             user_logger.critical(
-                f"Safety Manager | Can't find current TinyVerse version: {current_tverse_version}"
+                "Safety Manager | It's not safety to run the script, cause we couldn't get the current version of tverse."
             )
             return False
-        
+
         if current_tverse_version != self._known_tverse_version:
             user_logger.critical(
-                f"Safety Manager | Found different TinyVerse Version! | Current: {self._known_tverse_version} | New: {current_tverse_version}"
+                f"Safety Manager | It's not safety to run script, cause TinyVerse version is not {self._known_tverse_version} but {current_tverse_version}"
             )
             return False
 
