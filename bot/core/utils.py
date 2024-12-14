@@ -1,21 +1,14 @@
-def max_stars_to_add(total_dust, current_stars) -> int | bool:
-    min_stars = 100
-    max_stars_limit = 100000
+def max_stars_to_add(total_dust: int, current_stars: int) -> int:
+    if not total_dust or not current_stars:
+        return 0
 
-    def calculate_dust(stars_to_add):
-        star_dust_ratio = current_stars / 70
-        adjusted_stars = stars_to_add * star_dust_ratio - -((current_stars + (stars_to_add - 1)) / 70 - star_dust_ratio)
-        return adjusted_stars
-    
-    if current_stars + min_stars > max_stars_limit:
-        return False
+    max_cost_per_star = (total_dust * 70 + 1) // (current_stars + 1)
 
-    if calculate_dust(min_stars) > total_dust:
-        return False
+    max_total_stars = 100000 - current_stars
 
-    stars_to_add = 0
-    while (calculate_dust(stars_to_add + 1) <= total_dust and
-           current_stars + stars_to_add + 1 <= max_stars_limit):
-        stars_to_add += 1
+    maximum_stars = min(max_cost_per_star, max_total_stars)
 
-    return stars_to_add
+    if maximum_stars >= 100:
+        return maximum_stars
+    else:
+        return 0
