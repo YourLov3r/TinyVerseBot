@@ -1,7 +1,7 @@
 import argparse
 import asyncio
-from random import randint
 import traceback
+from random import randint
 from typing import Dict, List
 
 from better_proxy import Proxy
@@ -9,13 +9,15 @@ from better_proxy import Proxy
 from bot.config.config import settings
 from bot.core.registrator import get_telegram_client, register_sessions
 from bot.core.tinyversebot import run_bot
+from bot.core.utils import bot_state_checker
 from bot.utils.accounts_manager import AccountsManager
 from bot.utils.banner_animation import print_banner_animation
-from bot.utils.logger import user_logger, dev_logger
+from bot.utils.logger import dev_logger, user_logger
 
 options = """
 1. Register session
 2. Start Bot
+3. Update all user agents to telegram format
 """
 
 
@@ -37,8 +39,8 @@ async def process() -> None:
             if not action.isdigit():
                 user_logger.warning("Action must be number")
                 print(options)
-            elif action not in ["1", "2"]:
-                user_logger.warning("Action must be 1 or 2")
+            elif action not in ["1", "2", "3"]:
+                user_logger.warning("Action must be 1, 2 or 3")
                 print(options)
             else:
                 action = int(action)
@@ -57,11 +59,17 @@ async def process() -> None:
     elif action == 2:
         accounts = await AccountsManager().get_accounts()
         await run_tasks(accounts=accounts)
+    elif action == 3:
+        await AccountsManager().update_user_agents_to_telegram_format()
 
 
 async def run_tasks(accounts: List[Dict[str, str]]) -> None:
     tasks = []
     try:
+        bot_state_checker_task = asyncio.create_task(bot_state_checker())
+        bot_state_checker_task.set_name("Bot State Checker")
+        tasks.append(bot_state_checker_task)
+
         for account in accounts:
             session_name = account.get("session_name")
             user_agent = account.get("user_agent")

@@ -153,16 +153,6 @@ class TinyVerseBot:
         if settings.SLEEP_AT_NIGHT:
             await self._handle_night_sleep()
 
-        if settings.CHECK_BOT_STATE:
-            bot_state = await session.get(
-                "https://raw.githubusercontent.com/YourLov3r/TinyVerseBot/refs/heads/master/bot_state"
-            )
-            bot_state.raise_for_status()
-
-            if await bot_state.text() != "running":
-                user_logger.critical("Admins have stopped the bot!")
-                sys.exit(1)
-
         if not await self.safety_manager.check_safety(session):
             user_logger.critical(f"{self.session_name} | Safety check failed")
             sys.exit(1)
@@ -438,6 +428,12 @@ class TinyVerseBot:
             )
             response.raise_for_status()
             response_json = await response.json()
+
+            error = response_json.get("error")
+            if error:
+                error_message = error.get("text")
+                user_logger.warning(f"{self.session_name} | {error_message}")
+                raise Exception(f"{self.session_name} | {error_message}")
 
             collected_dust = response_json.get("response").get("dust")
 

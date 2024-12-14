@@ -1,3 +1,27 @@
+import asyncio
+import sys
+from typing import NoReturn
+
+import aiohttp
+
+from bot.utils.logger import user_logger
+
+
+async def bot_state_checker() -> NoReturn:
+    while True:
+        async with aiohttp.ClientSession() as session:
+            bot_state = await session.get(
+                "https://raw.githubusercontent.com/YourLov3r/TinyVerseBot/refs/heads/master/bot_state"
+            )
+            bot_state.raise_for_status()
+
+            if await bot_state.text() != "running":
+                user_logger.critical("Admins have stopped the bot!")
+                sys.exit(1)
+
+        await asyncio.sleep(20 * 60)  # 20 minutes
+
+
 def max_stars_to_add(total_dust: int, current_stars: int) -> int:
     if not total_dust or not current_stars:
         return 0

@@ -73,7 +73,7 @@ class AccountsManager:
 
         return available_accounts
 
-    async def update_ua_to_new_format(self):
+    async def update_user_agents_to_telegram_format(self):
         json_manager = JsonManager()
         accounts = json_manager.get_all_accounts()
 
@@ -89,3 +89,5 @@ class AccountsManager:
                 session_name=account.get("session_name"),
                 user_agent=new_user_agent,
             )
+
+        user_logger.info("All user agents have been updated to Telegram format")
