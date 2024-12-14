@@ -247,10 +247,13 @@ class TinyVerseBot:
 
         response_json = await response.json()
         self._user_info = response_json.get("response", {})
-        self._tverse_session = response_json.get("response", {}).get("session")
+        self._tverse_session = self._user_info.get("session")
+
+        if not self._user_info:
+            raise Exception(f"{self.session_name} | Couldn't get user info")
 
         if not self._tverse_session:
-            raise Exception(f"{self.session_name} | Failed to get user session")
+            raise Exception(f"{self.session_name} | Couldn't get tverse session")
 
         self.json_manager.update_account(
             session_name=self.session_name,
@@ -318,6 +321,9 @@ class TinyVerseBot:
             response_json = await response.json()
             self._user_info = response_json.get("response", {})
 
+            if not self._user_info:
+                raise Exception(f"{self.session_name} | Couldn't get user info")
+
         except Exception:
             raise Exception(f"{self.session_name} | Failed to get info")
 
@@ -343,6 +349,11 @@ class TinyVerseBot:
             if galaxy_id is None:
                 response_json = await response.json()
                 self.user_galaxy_id = response_json.get("response", {}).get("id")
+
+                if not self.user_galaxy_id:
+                    raise Exception(
+                        f"{self.session_name} | Couldn't get user galaxy id"
+                    )
 
         except Exception:
             raise Exception(
@@ -382,6 +393,10 @@ class TinyVerseBot:
             response_json = await response.json()
 
             collected_dust = response_json.get("response").get("dust")
+
+            if not collected_dust:
+                raise Exception(f"{self.session_name} | Couldn't collect dust")
+
             user_logger.info(
                 f"{self.session_name} | Successfully collected {collected_dust} dust"
             )
@@ -424,7 +439,6 @@ class TinyVerseBot:
             )
             response.raise_for_status()
             response_json = await response.json()
-            print(response_json)
 
         except Exception:
             raise Exception(f"{self.session_name} | Failed to open boosts")
