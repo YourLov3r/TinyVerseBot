@@ -249,6 +249,7 @@ class TinyVerseBot:
         error = response_json.get("error")
         if error:
             error_message = error.get("text")
+            user_logger.warning(f"{self.session_name} | {error_message}")
             raise Exception(f"{self.session_name} | {error_message}")
 
         self._user_info = response_json.get("response", {})
@@ -291,6 +292,7 @@ class TinyVerseBot:
             error = response_json.get("error")
             if error:
                 error_message = error.get("text")
+                user_logger.warning(f"{self.session_name} | {error_message}")
                 raise Exception(f"{self.session_name} | {error_message}")
 
         except Exception:
@@ -309,6 +311,7 @@ class TinyVerseBot:
             error = response_json.get("error")
             if error:
                 error_message = error.get("text")
+                user_logger.warning(f"{self.session_name} | {error_message}")
                 raise Exception(f"{self.session_name} | {error_message}")
 
         except Exception:
@@ -327,6 +330,7 @@ class TinyVerseBot:
             error = response_json.get("error")
             if error:
                 error_message = error.get("text")
+                user_logger.warning(f"{self.session_name} | {error_message}")
                 raise Exception(f"{self.session_name} | {error_message}")
 
         except Exception:
@@ -346,6 +350,7 @@ class TinyVerseBot:
             error = response_json.get("error")
             if error:
                 error_message = error.get("text")
+                user_logger.warning(f"{self.session_name} | {error_message}")
                 raise Exception(f"{self.session_name} | {error_message}")
 
             self._user_info = response_json.get("response", {})
@@ -379,6 +384,7 @@ class TinyVerseBot:
             error = response_json.get("error")
             if error:
                 error_message = error.get("text")
+                user_logger.warning(f"{self.session_name} | {error_message}")
                 raise Exception(f"{self.session_name} | {error_message}")
 
             if galaxy_id is None:
@@ -415,6 +421,7 @@ class TinyVerseBot:
             error = response_json.get("error")
             if error:
                 error_message = error.get("text")
+                user_logger.warning(f"{self.session_name} | {error_message}")
                 raise Exception(f"{self.session_name} | {error_message}")
 
             user_logger.info(f"{self.session_name} | Journey has begun")
@@ -483,6 +490,7 @@ class TinyVerseBot:
             error = response_json.get("error")
             if error:
                 error_message = error.get("text")
+                user_logger.warning(f"{self.session_name} | {error_message}")
                 raise Exception(f"{self.session_name} | {error_message}")
 
         except Exception:
