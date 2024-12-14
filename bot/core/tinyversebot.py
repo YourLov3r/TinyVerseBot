@@ -244,8 +244,13 @@ class TinyVerseBot:
             headers=self._headers["tinyverse"],
         )
         response.raise_for_status()
-
         response_json = await response.json()
+
+        error = response_json.get("error")
+        if error:
+            error_message = error.get("text")
+            raise Exception(f"{self.session_name} | {error_message}")
+
         self._user_info = response_json.get("response", {})
         self._tverse_session = self._user_info.get("session")
 
@@ -281,6 +286,12 @@ class TinyVerseBot:
                 headers=self._headers["tinyverse"],
             )
             response.raise_for_status()
+            response_json = await response.json()
+
+            error = response_json.get("error")
+            if error:
+                error_message = error.get("text")
+                raise Exception(f"{self.session_name} | {error_message}")
 
         except Exception:
             raise Exception(f"{self.session_name} | Failed to get config")
@@ -293,6 +304,12 @@ class TinyVerseBot:
                 headers=self._headers["tinyverse"],
             )
             response.raise_for_status()
+            response_json = await response.json()
+
+            error = response_json.get("error")
+            if error:
+                error_message = error.get("text")
+                raise Exception(f"{self.session_name} | {error_message}")
 
         except Exception:
             raise Exception(f"{self.session_name} | Failed to get lang")
@@ -305,6 +322,12 @@ class TinyVerseBot:
                 headers=self._headers["tinyverse"],
             )
             response.raise_for_status()
+            response_json = await response.json()
+
+            error = response_json.get("error")
+            if error:
+                error_message = error.get("text")
+                raise Exception(f"{self.session_name} | {error_message}")
 
         except Exception:
             raise Exception(f"{self.session_name} | Failed to get boosts")
@@ -319,6 +342,12 @@ class TinyVerseBot:
             )
             response.raise_for_status()
             response_json = await response.json()
+
+            error = response_json.get("error")
+            if error:
+                error_message = error.get("text")
+                raise Exception(f"{self.session_name} | {error_message}")
+
             self._user_info = response_json.get("response", {})
 
             if not self._user_info:
@@ -345,9 +374,14 @@ class TinyVerseBot:
                 headers=self._headers["tinyverse"],
             )
             response.raise_for_status()
+            response_json = await response.json()
+
+            error = response_json.get("error")
+            if error:
+                error_message = error.get("text")
+                raise Exception(f"{self.session_name} | {error_message}")
 
             if galaxy_id is None:
-                response_json = await response.json()
                 self.user_galaxy_id = response_json.get("response", {}).get("id")
 
                 if not self.user_galaxy_id:
@@ -376,6 +410,12 @@ class TinyVerseBot:
                 headers=self._headers["tinyverse"],
             )
             response.raise_for_status()
+            response_json = await response.json()
+
+            error = response_json.get("error")
+            if error:
+                error_message = error.get("text")
+                raise Exception(f"{self.session_name} | {error_message}")
 
             user_logger.info(f"{self.session_name} | Journey has begun")
         except Exception:
@@ -439,6 +479,11 @@ class TinyVerseBot:
             )
             response.raise_for_status()
             response_json = await response.json()
+
+            error = response_json.get("error")
+            if error:
+                error_message = error.get("text")
+                raise Exception(f"{self.session_name} | {error_message}")
 
         except Exception:
             raise Exception(f"{self.session_name} | Failed to open boosts")
