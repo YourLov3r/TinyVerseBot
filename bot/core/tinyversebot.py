@@ -229,7 +229,7 @@ class TinyVerseBot:
             max_stars = max_stars_to_add(
                 self._user_info.get("dust"), self._user_info.get("stars")
             )
-            if max_stars >= 0:
+            if max_stars > 0:
                 await self._add_stars_to_galaxy(session=session, max_stars=max_stars)
                 await self._get_galaxy(session, galaxy_id=self.user_galaxy_id)
                 await self._get_info(session)
