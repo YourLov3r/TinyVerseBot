@@ -4,9 +4,9 @@ from pydantic import BaseModel
 class UrlConfig(BaseModel):
     BASE_APP_DOMAIN: str = "https://app.tonverse.app"
     BASE_API_DOMAIN: str = "https://api.tonverse.app"
+
     APPJS_ENDPOINT: str = "/assets/js/app.js"
     AUTH_ENDPOINT: str = "/auth/telegram"
-
     CONFIG_ENDPOINT: str = "/config"
     LANG_ENDPOINT: str = "/data/lang"
     BOOST_ENDPOINT: str = "/data/boost"
@@ -20,7 +20,7 @@ class UrlConfig(BaseModel):
 
 class AppSettings(BaseModel):
     urls: UrlConfig = UrlConfig()
-    KNOWN_VERSION: str = "0.7.25"
+    KNOWN_VERSION: str = "0.7.26"
 
 
 app_settings = AppSettings()
